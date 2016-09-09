@@ -1,5 +1,6 @@
 # Install_Font
-VBScript to install fonts
+VBScript to Install fonts
+VBScript to Uninstall fonts
 
 Script originally created for SCCM 2012 deployment as "Application"
 
