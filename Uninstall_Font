@@ -1,0 +1,166 @@
+'------------------------------------------------------------------------------------
+'	Uninstall_Font_Free.vbs
+'	L'OREAL UK & IRL Uninstall Font - Free
+' 		- [more info]
+'
+'	Version	Date		  Who				Changes
+'	1.0		30/08/2016  Javier RUIDIAZ    	
+'------------------------------------------------------------------------------------
+
+Const wbemFlagReturnImmediately = &h10
+Const wbemFlagForwardOnly = &h20
+Const ForReading = 1
+Const ForWriting = 2
+Const ForAppending = 8
+
+On Error Resume Next
+Dim objShell, objFSO, oShell, objWsh
+Dim WriteLogfile, strlogFile
+
+strComputer = "."
+
+Set objShell = CreateObject("WScript.Shell")
+Set objFSO = CreateObject("Scripting.FileSystemObject") 
+Set oShell = WScript.CreateObject ("WScript.Shell")
+Set objWsh = WScript.CreateObject ("WScript.Shell")
+
+
+
+' log file settings
+WriteLogfile = 1	' change to '0' if no logging is required
+LogfilePath = "C:\IT_Logs"	
+
+'=== Logfile Path and Name ; create ===
+strTimeStamp = fnGetTimeStamp()
+strLogfileName = "Uninstall_Font_" & strTimeStamp & ".log"	'amend logfile name
+strLogfile = LogfilePath & "\" & strLogfileName
+
+if WriteLogfile = 1 Then
+	If Not objFSO.FolderExists(LogfilePath) Then
+		Set createLogFolder = objFSO.CreateFolder(LogfilePath)
+	end if
+end if
+
+
+' main part
+writeLog("--------------------------------------------------------------------------------------------------")
+writeLog("INFO: Uninstall_Font_Free started " & strTimeStamp & ".")
+writeLog("--------------------------------------------------------------------------------------------------")
+
+writeLog("Delete SourceSansPro - Family fonts...")
+	'Delete all SourceSansPro fonts 
+	oShell.run "cmd.exe /C del ""C:\Windows\Fonts\sourcesanspro*.*"" ""/Q /S /F"" "
+	
+	Set oShell = Nothing
+	
+writeLog("Delete Montserrat Fonts")
+	'Delete all Montserrat fonts 
+	oShell.run "cmd.exe /C del ""C:\Windows\Fonts\Montserrat*.*"" ""/Q /S /F"" "
+	
+	Set oShell = Nothing
+	
+writeLog("Delete Playfair fonts")
+	'Delete all PlayFair fonts 
+	oShell.run "cmd.exe /C del ""C:\Windows\Fonts\playfair*.*"" ""/Q /S /F"" "
+	
+	Set oShell = Nothing
+	
+writeLog("Delete Journal Font")
+	'Delete Journal font
+	oShell.run "cmd.exe /C del ""C:\Windows\Fonts\journal*.*"" ""/Q /S /F"" "
+	
+	Set oShell = Nothing
+	
+writeLog("Delete registry keys")
+	'Delete registry keys 
+	objWsh.run "regedit.exe /S "".\RegDelete_Free.reg" 
+	
+	Set objWsh = Nothing
+	
+	'Check if the fonts have been removed from C:\Windows\Fonts\
+	strFontSourcePath = ".\SOURCE"	
+	
+	If objFSO.FolderExists(strFontSourcePath) Then
+	 
+	Set objNameSpace = objShell.Namespace(strFontSourcePath)
+	Set objFolder = objFSO.getFolder(strFontSourcePath)
+
+	For Each objFile In objFolder.files
+
+		If LCase(right(objFile,4)) = ".ttf" OR LCase(right(objFile,4)) = ".otf" Then
+		
+				If objFSO.FileExists("C:\Windows\Fonts\" & objFile.Name) Then
+					
+						writeLog("ERROR when removing font: " & objFile.Name)
+					
+				Else
+							writeLog("Font Uninstalled: " & objFile.Name)
+				End If
+		Else
+			writeLog("Font not in the system: " & objFile.Name)			
+			Set objFSO = Nothing
+			
+		End If
+		
+	Next
+	
+	Else
+			writeLog("Font not in the system: " & objFile.Name)		
+	End If
+
+
+writeLog("--------------------------------------------------------------------------------------------------")
+writeLog("INFO: Uninstall_Font_Free has finished")
+writeLog("--------------------------------------------------------------------------------------------------")
+
+
+' functions and subs
+'=============================================
+'	Function for logging
+'=============================================
+Function writeLog(strLogging)
+	if WriteLogfile = 1 Then
+		Set objLog = objFSO.OpenTextFile(strLogfile, ForAppending, True)
+		objlog.writeline Date & " " & Time & " " & " <" & strLogging & ">"
+		objLog.close
+	end if
+End Function
+
+'=============================================
+'	Functions for formatting MsgBoxes
+'=============================================
+Function MsgBoxInfo(strTXT)
+	MsgBox strTXT, vbInformation, "INFO"
+End Function
+
+Function MsgBoxExcl(strTXT)
+	MsgBox strTXT, vbExclamation, "ATTENTION"
+End Function
+
+Function MsgBoxErr(strTXT)
+	MsgBox strTXT, vbCritical, "ERROR"
+End Function
+
+'=============================================
+'	Function for formatting TimeStamps
+'=============================================
+Function fnGetTimeStamp()
+	t = Now
+	
+	y = Year(t)
+	m = Month(t)
+	d = Day(t)
+	h = Hour(t)
+	mn = Minute(t)
+	s = Second(t) 
+	
+	strArr = Array(m,d,h,mn,s)
+	
+	for i=0 To 4
+		if strArr(i) < 10 Then
+			strArr(i) = "0" & strArr(i)
+		End If
+	Next
+	
+	fnGetTimeStamp = y & strArr(0) & strArr(1) & "_" & strArr(2) & strArr(3) & strArr(4)
+End Function
